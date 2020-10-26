@@ -1,26 +1,31 @@
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
-
+//É necessário deixar a senha padrao do RabbitMQ
+//Classe responsavel por enviar itens à fila
 public class Produtor {
-
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) throws Exception{
+//Criacao de uma factory de conexao, responsavel por criar as conexoes
         ConnectionFactory connectionFactory = new ConnectionFactory();
-        try (
-                Connection connection = connectionFactory.newConnection();
-                Channel canal = connection.createChannel();
-        ) {
-            String mensagem = "Olá";
-            String NOME_FILA = "plica";
-
-            //(queue, passive, durable, exclusive, autoDelete, arguments)
-            canal.queueDeclare(NOME_FILA, false, false, false, null);
-
-            // ​(exchange, routingKey, mandatory, immediate, props, byte[] body)
-            canal.basicPublish("", NOME_FILA, false, false, null, mensagem.getBytes());
-
+//localizacao do gestor da fila (Queue Manager)
+        connectionFactory.setHost("localhost");
+        connectionFactory.setPort(5672);
+        String NOME_FILA = "filaWorkerTeste";
+        try(
+            //criacao de uma coneccao
+            Connection connection = connectionFactory.newConnection();
+//criando um canal na conexao
+            Channel channel = connection.createChannel()) {
+//Esse corpo especifica o envio da mensagem para a fila
+//Declaracao da fila. Se nao existir ainda no queue manager, sera criada. Se jah existir, e foi criada com
+// os mesmos parametros, pega a referencia da fila. Se foi criada
+// com parametros diferentes, lanca excecao
+            boolean duravel = true;
+            channel.queueDeclare(NOME_FILA, duravel, false, false, null);
+            String mensagem = "Olá....";
+//publica uma mensagem na fila
+            channel.basicPublish("", NOME_FILA, null, mensagem.getBytes());
+            System.out.println("Enviei mensagem: " + mensagem);
         }
     }
 }
-
-
